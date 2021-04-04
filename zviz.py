@@ -4,12 +4,14 @@ import nxgraph as nxg
 from tree import Tree
 
 
+# TODO check residual connection
+# TODO fix addressing None
 class Zviz:
     def __init__(self, nameddic, graphimgpath='tmp.png'):
         self.optim = {}
         self.tree = Tree()
         self.nameddic = nameddic
-        self.namedinout = {hex(id(nameddic[k])): [k, [None, None, None], [None, None, None], nameddic[k]] for k in
+        self.namedinout = {hex(id(nameddic[k])): [k, [], [], nameddic[k]] for k in
                            nameddic}
         self.graphimgpath = graphimgpath
 
@@ -17,13 +19,15 @@ class Zviz:
             mId = hex(id(model))
             # print(mId,self.namedinout)
             if data[0].grad_fn:
-                self.namedinout[mId][1][0] = hex(id(data[0].grad_fn))
-                self.namedinout[mId][1][1] = data[0].grad_fn
-            self.namedinout[mId][1][2] = data[0].shape
+                inputid_ori = hex(id(data[0].grad_fn)), data[0].grad_fn
+            else:
+                inputid_ori = hex(id(data[0])),data[0]
+            self.namedinout[mId][1].append([*inputid_ori, data[0].shape])
             if out.grad_fn:
-                self.namedinout[mId][2][0] = hex(id(out.grad_fn))
-                self.namedinout[mId][2][1] = out.grad_fn
-            self.namedinout[mId][2][2] = out.shape
+                outid_ori = hex(id(out.grad_fn)), out.grad_fn
+            else:
+                outid_ori = None, None
+            self.namedinout[mId][2].append([*outid_ori, out.shape])
             # print(hex(id(out.grad_fn)))
             # print(out.grad_fn)
             # print(hex(id(out)))
@@ -63,30 +67,7 @@ class Zviz:
 
 
 if __name__ == '__main__':
-    import torch
-    from torchvision.models import resnet18
+    import test.test5
 
-    conv0 = torch.nn.Conv2d(3, 3, 3)
-    # conv1 = torch.nn.Conv2d(3, 3, 3)
-    # conv2 = resnet18()
-    # conv2=torch.nn.Sequential(torch.nn.Conv2d(3,3,3),torch.nn.Conv2d(3,3,3))
-    # model = torch.nn.Sequential(conv0, conv1)
-    zviz = Zviz({'conv0': conv0 })
-    optim = torch.optim.Adam(conv0.parameters())
-    # optim2 = torch.optim.Adam(conv2.parameters())
-    zviz.setoptimizer(optim, 'model')
-    # zviz.setoptimizer(optim2, '2')
-    data = torch.randn(3, 3, 256, 256)
-    data2 = torch.randn(3, 3, 256, 256)
-    out = conv0(data)
-    out2 = conv0(data2)
-    loss = out.mean()
-    loss2 = out2.mean()
-    zviz.backward(loss)
-    zviz.backward(loss2)
-    # zviz.step('model')
-    # zviz.step('2')
 
-    # zviz.zero_grad('model')
-    # zviz.zero_grad('2')
     print('END')

@@ -13,21 +13,41 @@ def getallsuccessors(G, node, sucs, end=None, depre=False):
             sucs.append(suc)
     return sucs
 
+def getallsuccessorsfromlist(G,nodes,ends=[],depre=False):
+    ret=[]
+    if ends!=[]:
+        for node in nodes:
+            for end in set(ends):
+                ret.extend(getallsuccessors(G,node,[],end,depre))
+    else:
+        for node in nodes:
+            ret.extend(getallsuccessors(G,node,[],depre=depre))
+    return list(set(ret))
 
-def replacefrom(G, node, H, end=None, phase='forward', datashape=None, outputshape=None, backwardids=[]):
+def replacefrom(G, nodes, H, ends=[], phase='forward', datashape=None, outputshape=None,name="",tree=None,endbackids=[]):
+    # assert len(ends)==len(endbackids)
     edgestyle = edgestyledic[phase]
-    if end: predecessors = list(G.predecessors(end))
-    sucs = G.successors(node)
-    G.remove_nodes_from(getallsuccessors(G, node, [], end, depre=True) + [node])
+    # if ends!=[]: predecessors = flatten([list(G.predecessors(end)) for end in ends]) !!!
+    sucs = flatten([list(G.successors(node)) for node in nodes])
+    if sucs==[]:
+        return G
+    G.remove_nodes_from(getallsuccessorsfromlist(G, nodes, ends, depre=True) + nodes)
     G = nx.compose(G, H)
-    if end:
-        for desuc in predecessors:
-            for h in get(H, root=True):
+    if ends!=[]:
+        for desuc in ends:
+            for h in get(H, root=True):# in fact, loop for once
+                # flag,ct=tree.hasthisctree(desuc)###
+                # backwardids=ct.getbackward(h)###
+                backwardids=''
                 G.add_edge(desuc, h, style=edgestyle, label=f'grad:{PU.join(" ", backwardids, "")}')
-        G.add_edge(end, node, style=edgestyle, label=f'grad:{PU.join(" ", backwardids, "")}')
+        for end in ends:
+            G.add_edge(end, name, style=edgestyle, label=f'grad:')
     for suc in sucs:
-        for h in get(H, root=False):
-            G.add_edge(h, suc, style=edgestyle, label=f'grad:{PU.join(" ", backwardids, "")}')
+        for h in nodes:# in fact, loop for once
+            flag, ct = tree.hasthisctree(suc)
+            backwardids = ct.getbackward(h)
+            if backwardids!=[]:
+                G.add_edge(name, suc, style=edgestyle, label=f'grad:{PU.join(" ", backwardids, "")}')
 
     return G
 
@@ -50,7 +70,7 @@ def makefromctrees(G, ctrees, phase):
     for ct in ctrees:
         if ct.isvariable:
             G.add_node(ct.id, xlabel=f'step:{ct.stepids}',
-                       label=f'{{{ct.variableshape},{ct.variableid}|grad:{PU.join(" ", ct.getbackgradidslist(), "")}}}',
+                       label=f'{{{ct.id},{ct.variableid}|grad:{PU.join(" ", ct.getbackgradidslist(), "")}}}',
                        shape='record')
         else:
             if ct.name != 'None':
@@ -68,19 +88,58 @@ def makegraph(trees, namedinout, phase, savepath, save=False):
     G = nx.DiGraph()
     makefromctrees(G, ctrees, phase)
 
+    nx.nx_agraph.to_agraph(G).draw(savepath, prog='dot')
+    namelist=[name for name,_,_,_ in namedinout.values()]
+    #set subgraph -> for ..
+    #replace models' subgraph with a node -> for ..
+
     for key in namedinout:
-        name, data, output, model = namedinout[key]
+        name, datalist, outputlist, model = namedinout[key]
         H = nx.DiGraph()
-        dataId, _, datashape = data
-        outputId, _, outputshape = output
-        if G.has_node(outputId):
-            ct = trees.hasthisctree(outputId)[1]
-            stepids = trees.getAbackwardid([hex(id(p)) for p in model.parameters()])
-            backwardids = ct.getbackgradidslist()
-            H.add_node(str(outputId), xlabel=f'step:{PU.join(" ", stepids, "")}',
-                       label=f'{{name:{name}|grad:{PU.join(" ", backwardids, "")}|input:{datashape}|output:{outputshape}}}',
-                       shape='record')
-            G = replacefrom(G, outputId, H, dataId, phase, datashape, outputshape, backwardids)
+        dataIds=[]
+        datashapes=[]
+        valdataIds=[]
+        valdatashapes=[]
+        databackgradIds=[]
+        for dataid , _,datashape in datalist:
+            flag,ct=trees.hasthisctree(dataid)
+            if flag or dataid in namelist:
+                dataIds.append(dataid)
+                datashapes.append(datashape)
+
+            else:
+                valdataIds.append(dataid)
+                valdatashapes.append(datashape)
+        outputIds=[]
+        outputshapes=[]
+        backwardids=[]
+        for outputid ,_,outputshape in outputlist:
+            flag,ct=trees.hasthisctree(outputid)
+            if flag:
+                outputIds.append(outputid)
+                outputshapes.append(outputshape)
+        for p in model.parameters():
+            flag,ct=trees.hasthisctree(hex(id(p)),findvariable=True)
+            if flag:
+                backwardids.extend(ct.getbackgradidslist())
+        backwardids=list(set(backwardids))
+        stepids = trees.getAbackwardid([hex(id(p)) for p in model.parameters()])
+        H.add_node(name, xlabel=f'step:{PU.join(" ", stepids, "")}',
+                   label=f'{{name:{name}|grad:{PU.join(" ", backwardids, "")}|input:{datashape}|output:{outputshape}}}',
+                   shape='record')
+        for valid ,valshape in zip(valdataIds,valdatashapes):
+            H.add_node(valid,label=f'{valshape},{valid}',shape='invtriangle')
+            H.add_edge(valid,name)
+
+        nx.nx_agraph.to_agraph(G).draw(savepath, prog='dot')
+        G = replacefrom(G, outputIds, H, dataIds, phase, datashapes, outputshapes,name,trees)
+
+        for exckey in namedinout.keys()-key:
+            for _outputid in outputIds:
+                _name, _datalist, _outputlist, _model = namedinout[exckey]
+                _datalist=[[_dataid,_origin,_datashape] if _dataid!=_outputid else [name,_origin,_datashape] for _dataid ,_origin,_datashape in _datalist]
+                namedinout[exckey]=_name, _datalist, _outputlist, _model
+
     if save:
         nx.nx_agraph.to_agraph(G).draw(savepath, prog='dot')
 

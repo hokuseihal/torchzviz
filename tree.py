@@ -18,6 +18,14 @@ class Tree:
         def getbackgradidslist(self):
             return [bids[0] for bids in self.backgradids]
 
+        def getbackward(self,s_id):
+            ret=[]
+            for bid,nexts in self.backgradids:
+                for nid,_ in nexts:
+                    if nid==s_id:
+                        ret.append(bid)
+            return list(set(ret))
+
         def backward(self, id, nextid, retain_graph=False):
             # assert not retain_graph, "According my principle, retain_graph is banned."
             if self.isvariable:
