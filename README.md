@@ -47,4 +47,4 @@ zviz.zero_grad('conv1')
 # Since zviz holds entire torch graph, you need to call clear() at the end.
 zviz.clear()
 ```
-![image](example.gif)
+![image](https://github.com/hokuseihal/torchzviz/blob/master/example.gif)
