@@ -3,7 +3,12 @@ Zviz
 A package visualizing the traced graph and the progress (backward,step, and zero_grad) of your pytorch.
 This repository is inspired by [PyTorchViz](https://raw.githubusercontent.com/szagoruyko/pytorchviz/).
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/18K71_mChwZYPl3nN9Q8BezJeN9wgi3b6?usp=sharing)
-
+## TODO
+- [x] show traced graph and the progress(backward, step, and zero_grad)
+- [x] show graph simply with named model
+- [x] multiple input, backward, step, and zero_grad
+- [ ] rich graphics with some animation libraly
+- [ ] multiple output
 ## Dependency
 - graphviz
   (e.g. ```sudo apt install graphviz libgraphviz-dev```)
