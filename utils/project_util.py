@@ -1,4 +1,5 @@
-def join(s, li, empty_s):
+def join(s=" ", li=[], empty_s=''):
+    li=[l for l in li if l !=None]
     if li == []:
         return empty_s
     elif len(li) == 1:
@@ -26,3 +27,15 @@ def printgradfn(x):
     if x.grad_fn:
         printnext(x.grad_fn)
         print('')
+
+def getidshapedict(xslist):
+    Idshapes={}
+    Idshapes_nograd={}
+    for i in range(len(xslist)):
+        for numx in range(len(xslist[i])):
+            x=xslist[i][numx]
+            if x.grad_fn:
+                Idshapes[hex(id(x.grad_fn))]=xslist[i][numx].shape
+            else:
+                Idshapes_nograd[hex(id(x))] = xslist[i][numx].shape
+    return Idshapes,Idshapes_nograd

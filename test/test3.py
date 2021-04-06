@@ -15,5 +15,4 @@ loss2 = out2.mean()
 zviz.backward(loss)
 zviz.backward(loss2)
 zviz.step('model')
-
 zviz.zero_grad('model')

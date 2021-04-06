@@ -2,7 +2,7 @@ BACKWARD = 0
 STEP = 1
 ZERO_GRAD = 2
 
-
+from utils.util import flatten
 class Tree:
     class cTree:
         def __init__(self, id, name=None):
@@ -16,7 +16,7 @@ class Tree:
             self.variableshape = 0
 
         def getbackgradidslist(self):
-            return [bids[0] for bids in self.backgradids]
+            return list(set([bids[0] for bids in self.backgradids]))
 
         def getbackward(self,s_id):
             ret=[]
@@ -36,11 +36,11 @@ class Tree:
             if ids is None:
                 self.checknextstatus(ZERO_GRAD)
                 ret = self.stepids
-                self.stepids = []
-                self.backgradids = []
+                # self.stepids = []
+                self.backgradids = [ (None,o) for id,o in self.backgradids]
                 return ret
             else:
-                self.stepids = list(set(self.stepids) - ids)
+                # self.stepids = list(set(self.stepids) - ids)
                 dels = []
                 for idx, (ownid, _) in enumerate(self.backgradids):
                     if ownid in ids:
@@ -71,28 +71,43 @@ class Tree:
     def __init__(self):
         self.ctrees = []
         self.backid = 0
+    #TODO implementation
+    def hasthesectrees(self,ids,findvariable):pass
+    # def hasthisctree(self, id, findvariable=False, ):
+    #     for ctree in self.ctrees:
+    #         if (ctree.id if not findvariable else ctree.variableid) == id:
+    #             return True, ctree
+    #     return False, None
 
     def hasthisctree(self, id, findvariable=False, ):
         for ctree in self.ctrees:
             if (ctree.id if not findvariable else ctree.variableid) == id:
-                return True, ctree
-        return False, None
-
+                return ctree
+        return None
     def getAbackwardid(self, params):
         for p in params:
-            hasflag, ct = self.hasthisctree(p, True)
-            if hasflag and ct.stepids != []:
+            ct = self.hasthisctree(p, True)
+            if ct and ct.stepids != []:
                 return ct.stepids
         return []
 
     def findall(self, variable):
         return [ctree for ctree in self.ctrees if not (ctree.isvariable ^ variable)]
+    def getbackwards(self,ids):
+        return list(set(flatten([ct.getbackgradidslist() for ct in self.ctrees if ct.id in ids])))
+
+    def getvariablebackwards(self,ids):
+        return list(set(flatten([ct.getbackgradidslist() for ct in self.ctrees if ct.variableid in ids])))
+    def getsteps(self,ids):
+        return list(set(flatten([ct.stepids for ct in self.ctrees if ct.id in ids])))
+    def getvariablesteps(self,ids):
+        return list(set(flatten([ct.stepids for ct in self.ctrees if ct.variableid in ids])))
 
     def backward(self, var):
         def follownext(t):
             # print(t, hex(id(t)))
-            hastree, takenctree = self.hasthisctree(hex(id(t)))
-            if not hastree:
+            takenctree = self.hasthisctree(hex(id(t)))
+            if not takenctree:
                 takenctree = self.cTree(hex(id(t)), name=t)
                 if hasattr(t, 'variable'):
                     takenctree.isvariable = True
@@ -115,8 +130,8 @@ class Tree:
 
     def step(self, params):
         for p in params:
-            hastree, takenctree = self.hasthisctree(hex(id(p)), findvariable=True)
-            if hastree:
+            takenctree = self.hasthisctree(hex(id(p)), findvariable=True)
+            if takenctree:
                 takenctree.step()
             else:
                 assert False, f'Cannot find {hex(id(p))} in zviz. Maybe backward(loss) is missing.'
@@ -124,17 +139,17 @@ class Tree:
     def zero_grad(self, params):
         ids = []
         for p in params:
-            hastree, takenctree = self.hasthisctree(hex(id(p)), findvariable=True)
-            if hastree:
+            takenctree = self.hasthisctree(hex(id(p)), findvariable=True)
+            if takenctree:
                 ids += takenctree.zero_grad()
             else:
                 assert False, f'WHY? CANNOT FIND {hex(id(p))} Maybe you miss backward?'
-        ids = set(ids)
-        for takenctree in self.findall(variable=False):
-            takenctree.zero_grad(ids)
-        dellist = []
-        for ct in self.ctrees:
-            if ct.backgradids == [] and ct.status == 0:
-                dellist.append(ct)
-        for dct in dellist:
-            self.ctrees.remove(dct)
+        # ids = set(ids)
+        # for takenctree in self.findall(variable=False):
+        #     takenctree.zero_grad(ids)
+        # dellist = []
+        # for ct in self.ctrees:
+        #     if ct.backgradids == [] and ct.status == 0:
+        #         dellist.append(ct)
+        # for dct in dellist:
+        #     self.ctrees.remove(dct)
