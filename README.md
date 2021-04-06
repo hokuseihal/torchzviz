@@ -13,7 +13,7 @@ This repository is inspired by [PyTorchViz](https://raw.githubusercontent.com/sz
 pip install zviz
 ```
 
-#Usage
+## Usage
 I prepared some examples on the [colab](https://colab.research.google.com/drive/18K71_mChwZYPl3nN9Q8BezJeN9wgi3b6?usp=sharing).
 ```angular2html
 import torch
