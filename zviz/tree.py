@@ -2,7 +2,7 @@ BACKWARD = 0
 STEP = 1
 ZERO_GRAD = 2
 
-from utils.util import flatten
+from zviz.utils.util import flatten
 class Tree:
     class cTree:
         def __init__(self, id, name=None):

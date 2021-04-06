@@ -1,6 +1,6 @@
 import networkx as nx
-import utils.project_util as PU
-from utils.util import flatten
+import zviz.utils.project_util as PU
+from  zviz.utils.util import  flatten
 
 def getallsuccessors(G, node, sucs, end=None, depre=False):
     fn = G.predecessors if depre else G.successors

@@ -6,7 +6,7 @@ This repository is inspired by [PyTorchViz](https://raw.githubusercontent.com/sz
 
 ## Dependency
 - graphviz
-  (e.g. ```sudo apt install graphviz```)
+  (e.g. ```sudo apt install graphviz libgraphviz-dev```)
 - python>=3.7
 ## Installation
 ```

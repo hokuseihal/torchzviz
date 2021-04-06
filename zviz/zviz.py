@@ -1,10 +1,7 @@
-import sys
-major,minor,_,_,_=sys.version_info
-assert major>=3 and minor>7,"USE UPPER PYTHON 3.7"
 import itertools as I
 
-import nxgraph as nxg
-from tree import Tree
+import zviz.nxgraph as nxg
+from zviz.tree import Tree
 import os
 
 class Zviz:

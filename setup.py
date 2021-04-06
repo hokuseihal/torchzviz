@@ -6,16 +6,19 @@ here = path.abspath(path.dirname(__file__))
 
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
-
+import sys
+major,minor,_,_,_=sys.version_info
+assert major>=3 and minor>=7,"USE UPPER PYTHON 3.7"
 setup(
     name='zviz',
     packages=['zviz'],
+    package_data={'zviz':['*py','utils/*']},
 
-    version='0.9.0',
+    version='1.0.0',
 
     license='MIT',
 
-    install_requires=['networkx'],
+    install_requires=['networkx','pygraphviz'],
 
     author='hokuseihal',
     author_email='hokuseihal@gmail.com',
