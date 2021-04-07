@@ -86,7 +86,6 @@ def makegraph(trees, namedinout, phase, savepath, save=False):
     G = nx.DiGraph()
     makefromctrees(G, ctrees, phase)
 
-
     if save:
         nx.nx_agraph.to_agraph(G).draw(savepath, prog='dot')
 
@@ -100,9 +99,9 @@ def replacewithmodels(G, namedinout, trees,savepath=None):
         datalist=[]
         outputlist=[]
         for idx,xs in enumerate(_outputlist):
-            # if hex(id(xs[0].grad_fn)) in _G.nodes():
-            datalist.append(_datalist[idx])
-            outputlist.append(_outputlist[idx])
+            if hex(id(xs[0].grad_fn)) in _G.nodes():
+                datalist.append(_datalist[idx])
+                outputlist.append(_outputlist[idx])
 
         dataIdshapes,valdataIdshapes=PU.getidshapedict(datalist)
         outputIdshapes,_=PU.getidshapedict(outputlist)

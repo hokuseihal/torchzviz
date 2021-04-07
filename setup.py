@@ -14,7 +14,7 @@ setup(
     packages=['zviz'],
     package_data={'zviz':['*py','utils/*']},
 
-    version='1.0.1',
+    version='1.0.2',
 
     license='MIT',
 
