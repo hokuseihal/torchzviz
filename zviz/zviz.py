@@ -5,7 +5,7 @@ from zviz.tree import Tree
 import os
 
 class Zviz:
-    def __init__(self, nameddic, graphdir='zviz',_optim=None):
+    def __init__(self, nameddic, graphdir='zvizimg',_optim=None):
         self.optim = {}
         self.tree = Tree()
         self.nameddic = nameddic
@@ -16,12 +16,14 @@ class Zviz:
         os.makedirs(self.graphdir,exist_ok=True)
         if _optim:
             self.optim=_optim
+        self.enable=True
 
         def forwardhook(model, data, out):
             mId = hex(id(model))
             # print(mId,self.namedinout)
             self.namedinout[mId][1].append(data)
-            self.namedinout[mId][2].append([out])
+            _out=out if type(out)==type([]) else [out]
+            self.namedinout[mId][2].append(_out)
             # print(hex(id(out.grad_fn)))
             # print(out.grad_fn)
             # print(hex(id(out)))
@@ -29,6 +31,8 @@ class Zviz:
         for name in nameddic:
             model = nameddic[name]
             model.register_forward_hook(forwardhook)
+    def disable_forever(self):
+        self.enable=False
     def addparams(self,dic):
         self.nameddic={**self.nameddic,**dic}
 
@@ -36,37 +40,41 @@ class Zviz:
         assert len(self.optim) != 0, "Do zip.optimizer(your_optimizer)."
 
     def backward(self, x):
-        self.checkoptimexist()
-        self.tree.backward(x)
-        self.graphimgpath=f'{self.graphdir}/{self.graphid}_backward.png'
-        self.graphid+=1
-        self.makegraph('backward')
+        if self.enable:
+            self.checkoptimexist()
+            self.tree.backward(x)
+            self.graphimgpath=f'{self.graphdir}/{self.graphid}_backward.png'
+            self.graphid+=1
+            self.makegraph('backward')
         x.backward()
 
     def setoptimizer(self, _optim, key='main'):
         self.optim[key] = [_optim, list(I.chain.from_iterable([pg['params'] for pg in _optim.param_groups]))]
     def step(self, key='main'):
-        self.checkoptimexist()
         optim, params = self.optim[key]
-        self.tree.step(params)
+        if self.enable:
+            self.checkoptimexist()
+            self.tree.step(params)
 
-        self.graphimgpath=f'{self.graphdir}/{self.graphid}_step_{key}.png'
-        self.graphid+=1
+            self.graphimgpath=f'{self.graphdir}/{self.graphid}_step_{key}.png'
+            self.graphid+=1
 
-        self.update_graph(params)
-        self.replacewithmodels()
+            self.update_graph(params)
+            self.replacewithmodels()
         optim.step()
 
     def zero_grad(self, key='main'):
-        self.checkoptimexist()
+
         optim, params = self.optim[key]
-        self.tree.zero_grad(params)
+        if self.enable:
+            self.checkoptimexist()
+            self.tree.zero_grad(params)
 
-        self.graphimgpath=f'{self.graphdir}/{self.graphid}_zerograd_{key}.png'
-        self.graphid+=1
+            self.graphimgpath=f'{self.graphdir}/{self.graphid}_zerograd_{key}.png'
+            self.graphid+=1
 
-        self.update_graph(params)
-        self.replacewithmodels()
+            self.update_graph(params)
+            self.replacewithmodels()
         optim.zero_grad()
 
     def makegraph(self, phase):
@@ -82,10 +90,3 @@ class Zviz:
 
     def clear(self):
         self.__init__(nameddic=self.nameddic,_optim=self.optim)
-
-
-if __name__ == '__main__':
-    import test.test4
-
-
-    print('END')

@@ -1,6 +1,8 @@
+import torch
+
 import networkx as nx
 import zviz.utils.project_util as PU
-from  zviz.utils.util import  flatten
+from  zviz.utils.util import  flatten,flatten_tensor
 
 def getallsuccessors(G, node, sucs, end=None, depre=False):
     fn = G.predecessors if depre else G.successors
@@ -98,9 +100,9 @@ def replacewithmodels(G, namedinout, trees,savepath=None):
         datalist=[]
         outputlist=[]
         for idx,xs in enumerate(_outputlist):
-            if hex(id(xs[0].grad_fn)) in _G.nodes():
-                datalist.append(_datalist[idx])
-                outputlist.append(_outputlist[idx])
+            # if hex(id(xs[0].grad_fn)) in _G.nodes():
+            datalist.append(_datalist[idx])
+            outputlist.append(_outputlist[idx])
 
         dataIdshapes,valdataIdshapes=PU.getidshapedict(datalist)
         outputIdshapes,_=PU.getidshapedict(outputlist)
@@ -127,14 +129,16 @@ def replacewithmodels(G, namedinout, trees,savepath=None):
                     if idx==1:
                         a,b=name,nbr
                         la,lb=n,nbr
-                        outputshape=f'{outputIdshapes[n]}'
+                        outputshape=outputIdshapes[n]
+                        if outputshape==torch.Size([]):
+                            outputshape='size(1)'
                     else:
                         a,b= nbr,name
                         la,lb=nbr,n
                         # outputshape=f'{dataIdshapes[n]}'
                         outputshape = ''
                     grads=_G.edges[la,lb]['label'].split(':')[-1]
-                    grads+='\n'+outputshape
+                    grads+='\n'+f'{outputshape}'
                     _G.add_edge(a, b, style='dashed',label=f'grad:{grads}',tail=f'{outputshape}')
             delnodes.append(n)
         _G.remove_nodes_from(delnodes)

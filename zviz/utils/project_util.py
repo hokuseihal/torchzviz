@@ -34,8 +34,12 @@ def getidshapedict(xslist):
     for i in range(len(xslist)):
         for numx in range(len(xslist[i])):
             x=xslist[i][numx]
+            try:
+                shape=xslist[i][numx].shape
+            except:
+                shape='?'
             if x.grad_fn:
-                Idshapes[hex(id(x.grad_fn))]=xslist[i][numx].shape
+                Idshapes[hex(id(x.grad_fn))]=shape
             else:
-                Idshapes_nograd[hex(id(x))] = xslist[i][numx].shape
+                Idshapes_nograd[hex(id(x))] = shape
     return Idshapes,Idshapes_nograd
