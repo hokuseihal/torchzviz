@@ -1,7 +1,7 @@
 Zviz
 ====
 A package visualizing PyTorch's traced graph and progress of the nn.Module (backward,step, and zero_grad) of your pytorch.
-This repository is inspired by [PyTorchViz](https://raw.githubusercontent.com/szagoruyko/pytorchviz/).
+This repository is inspired by [PyTorchViz](https://github.com/szagoruyko/pytorchviz/).
 
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/18K71_mChwZYPl3nN9Q8BezJeN9wgi3b6?usp=sharing)
